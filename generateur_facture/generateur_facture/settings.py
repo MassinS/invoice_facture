@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-f^*#mo2khe0u)t6qj+m=e3qv-s_$!@r2=+#$_#7b(gw0c%(!0g
 # SECURITY WARNING: don't run with debug turned on in production!
 # Gestion de l'environnement local vs production Render
 if os.getenv("RENDER"):
-    DEBUG = False
+    DEBUG = True
     ALLOWED_HOSTS = ['.onrender.com']
 else:
     DEBUG = True
@@ -129,7 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
