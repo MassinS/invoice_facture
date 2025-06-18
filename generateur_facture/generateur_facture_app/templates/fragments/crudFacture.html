@@ -1,0 +1,135 @@
+<div class="container-fluid pt-4 px-4">
+    <div class="bg-secondary text-center rounded p-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h6 class="mb-0">List des factures</h6>
+        </div>
+        <br>
+        <div class="table-responsive">
+            <table class="table text-start align-middle table-bordered table-hover mb-0">
+                <thead>
+                    <tr class="text-white">
+                        <th scope="col">ID</th>
+                        <th scope="col">date de création</th>
+                        <th scope="col">Total à payer</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {%for f in page_obj%}
+                    <tr>
+                        <td>{{f.id}}</td>
+                        <td>{{f.date_created}}</td>
+                        <td>{{f.get_total}} €</td>
+                        <td>
+                            <a href="suprimerFacture/{{f.id}}"><i class="fa fa-trash text-primary"></i></a>
+                            &nbsp;
+                            &nbsp;
+                            <a href="#" class="view-facture" data-facture-id="{{f.id}}" data-bs-toggle="modal" data-bs-target="#detailFactureModal"> <i class="fa fa-eye text-primary"></i></a>
+                            &nbsp;
+                            &nbsp;
+                            <a href="{% url 'facture_pdf' f.id %}" class="text-danger"><i class="fa fa-file-pdf text-primary"></i></a>
+                        </td>
+                    </tr>
+                    {%endfor%}
+                </tbody>
+            </table>
+        </div>
+
+        {%include 'fragments/pagination.html'%}
+
+
+        <!-- Modal pour voir les détails de la facture -->
+        <div class="modal fade" id="detailFactureModal" tabindex="-1" aria-labelledby="detailFactureModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content bg-secondary text-center rounded p-4">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detailFactureModalLabel">Détails de la Facture #<span id="factureId"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table text-start align-middle table-bordered table-hover mb-0">
+                                <thead>
+                                    <tr class="text-white">
+                                        <th>Produit</th>
+                                        <th>Prix unitaire</th>
+                                        <th>Quantité</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="factureDetailsBody">
+                                    <!-- Les détails seront insérés ici par JavaScript -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="text-white">
+                                        <td colspan="3" class="text-end"><strong>Total Général:</strong></td>
+                                        <td id="factureTotal">0.00 €</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du clic sur le bouton "Voir"
+    document.querySelectorAll('.view-facture').forEach(button => {
+        button.addEventListener('click', function() {
+            const factureId = this.getAttribute('data-facture-id');
+            document.getElementById('factureId').textContent = factureId;
+            
+            // Requête AJAX pour récupérer les détails
+            fetch(`/get_facture_details/${factureId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('factureDetailsBody');
+                    tbody.innerHTML = '';
+                    let totalGeneral = 0;
+                    
+                    data.items.forEach(item => {
+                        const row = document.createElement('tr');
+                        const total = item.prix * item.quantite;
+                        totalGeneral += total;
+                        
+                        row.innerHTML = `
+                            <td>${item.produit_nom}</td>
+                            <td>${item.prix.toFixed(2)} €</td>
+                            <td>${item.quantite}</td>
+                            <td>${total.toFixed(2)} €</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    
+                    document.getElementById('factureTotal').textContent = totalGeneral.toFixed(2) + ' €';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    });
+});
+</script>
+
+<style>
+    .pagination .page-link {
+        background-color: #2a3038;
+        border-color: #3a3f48;
+        color: #fff;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .pagination .page-link:hover {
+        background-color: #3a3f48;
+        color: #fff;
+    }
+</style>

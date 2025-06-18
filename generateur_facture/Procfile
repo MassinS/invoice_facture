@@ -1,0 +1,1 @@
+web: gunicorn generateur_facture.wsgi

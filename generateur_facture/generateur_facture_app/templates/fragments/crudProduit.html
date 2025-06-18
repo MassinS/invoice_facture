@@ -1,0 +1,223 @@
+<div class="container-fluid pt-4 px-4">
+    <div class="bg-secondary text-center rounded p-4">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h6 class="mb-0">List des produits</h6>
+             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">
+                Crée une facture
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                Ajouter
+            </button>
+        </div>
+        <br>
+        <div class="table-responsive">
+            <table class="table text-start align-middle table-bordered table-hover mb-0">
+                <thead>
+                    <tr class="text-white">
+                        <th scope="col"></th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Nom</th>
+                        <th scope="col">Prix</th>
+                        <th scope="col">Date de péremption</th>
+                        <th scope="col">Action</th>
+                        <th scope="col">Quantité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in page_obj %}
+                    <tr>
+                        <td><input class="form-check-input produit-checkbox" type="checkbox" data-produit-id="{{p.id}}"></td>
+                        <td>{{p.id}}</td>
+                        <td>{{p.nom}}</td>
+                        <td>{{p.prix}}</td>
+                        <td>{{p.date_peremption}}</td>
+                        
+                        <td>
+                            <a href="suprimerProduit/{{p.id}}"><i class="fa fa-trash text-primary"></i></a>
+                            &nbsp;
+                            &nbsp;
+                            <a href="modifier/{{p.id}}"><i class="fa fa-edit text-primary"></i></a>
+                        </td>
+                        <td class="quantite-cell" style="display: none;">
+                            <input type="number" class="form-control quantite-input" min="1" value="1" style="width: 70px;">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {%include 'fragments/pagination.html'%}
+
+        <!-- Info sur la pagination -->
+        <div class="text-center text-white">
+            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }} - {{ page_obj.paginator.count }} produits au total
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-secondary text-center rounded p-4">
+                    <form action="ajoutProduit/" method="post">
+                        {%csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Nouveau Produit</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="text-align: left;">
+
+                            <div class="mb-3">
+                                <label for="exampleInput" class="form-label">Nom</label>
+                                <input type="text" class="form-control" name="nom">
+                            </div>
+                            <div class="mb-3">
+                                <label for="exampleInput" class="form-label">Prix</label>
+                                <input type="text" class="form-control" name="prix">
+                            </div>
+                            <div class="mb-3">
+                                <label for="exampleInput" class="form-label">Date péremption</label>
+                                <input type="date" class="form-control" name="date_peremption">
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                            <button type="submit" class="btn btn-primary">Ajouter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour créer une facture -->
+        <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel2" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-secondary text-center rounded p-4">
+                    <form id="factureForm" method="post">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel2">Créer une facture</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="text-align: left;">
+                            <div id="selectedProductsList">
+                                <!-- Les produits sélectionnés apparaîtront ici -->
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                            <button type="submit" class="btn btn-primary">Créer la facture</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des checkbox
+    const checkboxes = document.querySelectorAll('.produit-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const quantiteCell = row.querySelector('.quantite-cell');
+            
+            if (this.checked) {
+                quantiteCell.style.display = 'table-cell';
+            } else {
+                quantiteCell.style.display = 'none';
+            }
+        });
+    });
+    
+    // Gestion du bouton "Créer une facture"
+    document.querySelector('.btn-primary[data-bs-target="#exampleModal2"]').addEventListener('click', function() {
+        const selectedProductsList = document.getElementById('selectedProductsList');
+        selectedProductsList.innerHTML = '';
+        
+        document.querySelectorAll('.produit-checkbox:checked').forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            const productId = checkbox.dataset.produitId;
+            const productName = row.querySelector('td:nth-child(3)').textContent;
+            const productPrice = row.querySelector('td:nth-child(4)').textContent;
+            const quantity = row.querySelector('.quantite-input').value;
+            
+            // Ajouter le produit à la liste dans le modal
+            const productDiv = document.createElement('div');
+            productDiv.className = 'mb-3';
+            productDiv.innerHTML = `
+                <h6>${productName}</h6>
+                <p>Prix unitaire: ${productPrice} - Quantité: ${quantity}</p>
+                <input type="hidden" name="produit_id" value="${productId}">
+                <input type="hidden" name="quantite" value="${quantity}">
+            `;
+            selectedProductsList.appendChild(productDiv);
+        });
+        
+        if (selectedProductsList.children.length === 0) {
+            selectedProductsList.innerHTML = '<p>Aucun produit sélectionné</p>';
+        }
+    });
+    
+    // Soumission du formulaire de facture
+    document.getElementById('factureForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const selectedProducts = [];
+        
+        // Récupérer tous les produits sélectionnés
+        const produitIds = document.querySelectorAll('input[name="produit_id"]');
+        const quantites = document.querySelectorAll('input[name="quantite"]');
+        
+        for (let i = 0; i < produitIds.length; i++) {
+            selectedProducts.push({
+                produit_id: produitIds[i].value,
+                quantite: quantites[i].value
+            });
+        }
+        
+        // Envoyer les données au serveur via AJAX
+        fetch('/creer_facture/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                produits: selectedProducts
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Facture créée avec succès!');
+                window.location.reload();
+            } else {
+                alert('Erreur lors de la création de la facture: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue');
+        });
+    });
+});
+</script>
+
+<style>
+    .pagination .page-link {
+        background-color: #2a3038;
+        border-color: #3a3f48;
+        color: #fff;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .pagination .page-link:hover {
+        background-color: #3a3f48;
+        color: #fff;
+    }
+</style>
