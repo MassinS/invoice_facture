@@ -69,8 +69,8 @@
                             </div>
                             <div class="mb-3">
                                 <label for="exampleInputEmail1" class="form-label">Date</label>
-                                <input type="date" class="form-control" name="date_peremption" value="{{frechercher.date_peremption}}">
-                            </div>
+                           <input type="date" class="form-control" name="date_peremption" value="{{ frechercher.date_peremption|date:'Y-m-d' }}">
+                           </div>
 
                         </div>
                         <div class="modal-footer">
