@@ -28,7 +28,7 @@ def renderProduits(request):
         'page_obj': page_obj,
         'active_page': 'produits',
     }
-    return render(request, 'Produits.html', context)
+    return render(request, 'produits.html', context)
 
 
 def renderModifier(request,id):
@@ -120,7 +120,7 @@ def renderFactures(request):
         'page_obj': page_obj,
         'active_page': 'factures',
     }
-    return render(request, 'Factures.html', context)
+    return render(request, 'factures.html', context)
 
 def suprimerFacture(request,id):
     fsup=Factures.objects.get(id=id)
